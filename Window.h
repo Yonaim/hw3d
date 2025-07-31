@@ -1,36 +1,63 @@
-#pragma once
+ï»¿#pragma once
 #include "ChiliWin.h"
+#include "ChiliException.h"
 
 class Window
 {
-private:
+  public:
+	class Exception : public ChiliException
+	{
+	  public:
+		Exception(int line, const char *file, HRESULT hr) noexcept;
+		const char         *what() const noexcept override;
+		virtual const char *GetType() const noexcept;
+		static std::string  TranslateErrorCode(HRESULT hr);
+		HRESULT             GetErrorCode() const noexcept;
+		std::string         GetErrorString() const noexcept;
+
+	  private:
+		HRESULT hr;
+	};
+
+  private:
 	// singleton manages registration/cleanup of window class
 	class WindowClass
 	{
-	public:
-		static const wchar_t* GetName () noexcept;
-		static HINSTANCE GetInstance () noexcept;
-	private:
-		WindowClass () noexcept; // ¿ÜºÎ¿¡¼­´Â »ı¼º ºÒ°¡
-		~WindowClass ();
-		WindowClass (const WindowClass&) = delete; // Do not use copy
-		WindowClass& operator=(const WindowClass&) = delete; // Do not use copy
-		static constexpr const wchar_t* wndClassName = L"Chili Direct3D Engine Window"; // ÄÄÆÄÀÏ ½Ã°£ »ó¼ö
-		
-		static WindowClass wndClass; // WindowClass Å¬·¡½º ³»¿¡ WindowClass °´Ã¼°¡ µ¶¸³ÀûÀ¸·Î Á¸Àç (singleton)
-		HINSTANCE hInst;
-	};
-public:
-	Window (int width , int height , const wchar_t* name) noexcept;
-	~Window ();
-	Window (const Window&) = delete;
-	Window& operator=(const Window&) = delete;
-private:
-	static LRESULT CALLBACK HandleMsgSetup (HWND hWnd , UINT msg , WPARAM wParam , LPARAM lParam);
-	static LRESULT CALLBACK HandleMsgThunk (HWND hWnd , UINT msg , WPARAM wParam , LPARAM lParam); // Áß°£ ´Ù¸® ¿ªÇÒ ÇØÁÖ´Â ÇÔ¼ö(thunk) (ÀÎÀÚ·Î ¹ŞÀ» ¼ö ÀÖ´Â°Ç c ½ºÅ¸ÀÏÀÇ Àü¿ª ÇÔ¼öÀÌ±â ¶§¹®¿¡)
-	LRESULT HandleMsg (HWND hWnd , UINT msg , WPARAM wParam , LPARAM lParam);
+	  public:
+		static const wchar_t *GetName() noexcept;
+		static HINSTANCE      GetInstance() noexcept;
 
-	int width;
-	int height;
+	  private:
+		WindowClass() noexcept; // ì‹±ê¸€í†¤ì´ë¯€ë¡œ ìƒì„±ìëŠ” private
+		~WindowClass();
+		WindowClass(const WindowClass &)            = delete; // Do not use copy
+		WindowClass &operator=(const WindowClass &) = delete; // Do not use copy
+		static constexpr const wchar_t *wndClassName
+			= L"Chili Direct3D Engine Window"; // wide-character string
+
+		static WindowClass wndClass; // ë‹¨ í•˜ë‚˜ì˜ ê°ì²´
+		HINSTANCE          hInst;    // ê°ì²´ì˜ ë©¤ë²„ë³€ìˆ˜
+	};
+
+  public:
+	Window(int width, int height, const wchar_t *name);
+	~Window();
+	Window(const Window &)            = delete;
+	Window &operator=(const Window &) = delete;
+
+  private:
+	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam,
+										   LPARAM lParam);
+	static LRESULT CALLBACK
+	HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam,
+				   LPARAM lParam); // c ì „ì—­ í•¨ìˆ˜ë§Œ ë°›ìŒìœ¼ë¡œ ì¸í•´ ì¤‘ê°„ ë‹¤ë¦¬
+								   // ì—­í• ì„ í•´ì£¼ëŠ” thunk
+	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	int  width;
+	int  height;
 	HWND hWnd;
-}; 
+};
+
+// error exception helper macro
+#define CHWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
