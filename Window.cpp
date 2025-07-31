@@ -1,4 +1,5 @@
 ﻿#include "Window.h"
+#include "resource.h"
 
 // =============================================================================
 //                            Window::WindowClass
@@ -16,13 +17,21 @@ Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = GetInstance();
-	wc.hIcon         = nullptr;
+	wc.hIcon
+		= static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_APPICON),
+									   IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+	wc.hIconSm
+		= static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_APPICON),
+									   IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR));
 	wc.hCursor       = nullptr;
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName  = nullptr;
 	wc.lpszClassName = GetName();
-	wc.hIconSm       = nullptr;
-	RegisterClassExW(&wc);
+	int rc = RegisterClassExW(&wc);
+	if (rc == 0)
+	{
+		throw CHWND_LAST_EXCEPT();
+	}
 }
 
 Window::WindowClass::~WindowClass()
@@ -70,15 +79,15 @@ const char *Window::Exception::GetType() const noexcept
 std::string Window::Exception::TranslateErrorCode(HRESULT hr)
 {
 	char *pMsgBuf = nullptr;
-	DWORD nMsgLen = FormatMessage(
+	DWORD nMsgLen = FormatMessageA(
 		// API 측에서 직접 메모리 할당하도록 지시
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
 			| FORMAT_MESSAGE_IGNORE_INSERTS,
-		nullptr, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		reinterpret_cast<LPWSTR>(&pMsgBuf), 0, nullptr);
+		nullptr, hr, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr);
 	if (nMsgLen == 0)
 		return "Unidentified error code";
-	std::string errorString = pMsgBuf;
+	std::string errorString(pMsgBuf);
 	LocalFree(pMsgBuf); // API가 할당한 힙 영역 해제하는 함수 호출
 	return errorString;
 }
@@ -111,14 +120,14 @@ Window::Window(int width, int height, const wchar_t *name)
 		throw CHWND_LAST_EXCEPT();
 
 	// create window & get hWnd
-	hWnd = CreateWindowW(
-		WindowClass::GetName(), name, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+	hWnd = CreateWindowW(WindowClass::GetName(), name,
+						WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, WindowClass::GetInstance(), this);
-    if (hWnd == nullptr)
+	if (hWnd == nullptr)
 		throw CHWND_LAST_EXCEPT();
-	
-    ShowWindow(hWnd, SW_SHOWDEFAULT);
+
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam,

@@ -1,8 +1,16 @@
-﻿#include "Window.h"
+﻿#include <windows.h>
+#include "Window.h"
 #include "WindowsMessageMap.h"
-#include <Windows.h>
 #include <sstream>
 
+std::wstring to_wstring(const char *src)
+{
+	int          len = MultiByteToWideChar(CP_UTF8, 0, src, -1, nullptr, 0);
+	std::wstring wstr(len, 0);
+	MultiByteToWideChar(CP_UTF8, 0, src, -1, &wstr[0], len);
+	return wstr;
+}
+  
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static WindowsMessageMap mm;
@@ -47,7 +55,6 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	try
 	{
 		Window wnd(800, 300, L"Donkey Fart Box");
-		Window wnd2(500, 300, L"Donkey Fart Box2");
 
 		MSG  msg;
 		BOOL gResult;

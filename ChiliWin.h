@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 // target Windows 7 or later
 #define _WIN32_WINNT 0x0601
