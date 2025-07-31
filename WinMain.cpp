@@ -39,7 +39,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-int CALLBACK WinMain(LPSTR lpCmdLine, int nCmdShow)
+int CALLBACK WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR     lpCmdLine,
+	int       nCmdShow )
 {
 	try
 	{
@@ -61,7 +64,8 @@ int CALLBACK WinMain(LPSTR lpCmdLine, int nCmdShow)
 	}
 	catch (const ChiliException &e)
 	{
-		MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
+		MessageBoxA(nullptr, e.what(), e.GetType(),
+				   MB_OK | MB_ICONEXCLAMATION);
 	}
 	catch (const std::exception &e)
 	{

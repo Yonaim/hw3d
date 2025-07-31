@@ -16,3 +16,15 @@ const char* ChiliException::GetType () const noexcept
 {
 	return "Chili Exception";
 }
+
+const std::string &ChiliException::GetFile() const noexcept
+{
+    return file;
+}
+
+std::string ChiliException::GetOriginString() const noexcept
+{
+	std::ostringstream oss;
+	oss << "[File] " << file << std::endl << "[Line] " << line;
+	return oss.str();
+}

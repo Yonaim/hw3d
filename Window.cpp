@@ -54,8 +54,9 @@ const char *Window::Exception::what() const noexcept
 {
 	std::ostringstream oss;
 	oss << GetType() << std::endl
-		<< "[Error Code]" << GetErrorCode() << std::endl
-		<< "[Decription]" << GetErrorCode() << std::endl
+		<< "[Error Code] 0x" << std::hex << std::uppercase << GetErrorCode()
+		<< std::dec << " (" << (unsigned long)GetErrorCode() << ")" << std::endl
+		<< "[Description] " << TranslateErrorCode(hr) << std::endl
 		<< GetOriginString();
 	whatBuffer = oss.str();
 	return whatBuffer.c_str();
@@ -105,16 +106,19 @@ Window::Window(int width, int height, const wchar_t *name)
 	wr.right  = width + wr.left;
 	wr.bottom = height + wr.top;
 	// adjust window size to account for title bar, menu bar, etc.
-	AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
-
-	throw CHWND_EXCEPT(ERROR_ARENA_TRASHED);
+	if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+								FALSE)))
+		throw CHWND_LAST_EXCEPT();
 
 	// create window & get hWnd
 	hWnd = CreateWindowW(
 		WindowClass::GetName(), name, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, WindowClass::GetInstance(), this);
-	ShowWindow(hWnd, SW_SHOWDEFAULT);
+    if (hWnd == nullptr)
+		throw CHWND_LAST_EXCEPT();
+	
+    ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam,
