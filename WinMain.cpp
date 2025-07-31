@@ -44,6 +44,7 @@ int CALLBACK WinMain (
 	LPSTR lpCmdLine, int nCmdShow)
 {
 	Window wnd (800 , 300 , L"Donkey Fart Box");
+	Window wnd2 (500 , 300 , L"Donkey Fart Box2");
 
 	MSG msg;
 	BOOL gResult;
