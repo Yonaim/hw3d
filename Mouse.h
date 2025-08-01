@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <queue>
 #include <bitset>
 
@@ -109,6 +109,7 @@ class Mouse
 	void OnWheelUp(int x, int y) noexcept;
 	void OnWheelDown(int x, int y) noexcept;
 	void TrimBuffer() noexcept; // just trim buffer if oversize
+	void OnWheelDelta(int x, int y, int delta);
 
   private:
 	static constexpr unsigned int bufferSize = 16u;
@@ -117,5 +118,6 @@ class Mouse
 	bool                          leftIsPressed  = false;
 	bool                          rightIsPressed = false;
 	bool                          isInWindow     = false;
+	int                           wheelDeltaCarry = 0;
 	std::queue<Event>             buffer;
 };

@@ -57,6 +57,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 		MSG  msg;
 		BOOL gResult;
+		int  wheelCnt = 0;
+
 		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0)
 		{
 			TranslateMessage(&msg);
@@ -76,6 +78,23 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					oss << "Mouse Position: (" << e.GetPosX() << ","
 						<< e.GetPosY() << ")";
 					wnd.SetTitle(oss.str());
+					break;
+				}
+				case Mouse::Event::Type::WheelUp:
+				{
+					wheelCnt += 1;
+					std::ostringstream oss;
+					oss << "wheel Cnt: " << wheelCnt;
+					wnd.SetTitle(oss.str());
+					break;
+				}
+				case Mouse::Event::Type::WheelDown:
+				{
+					wheelCnt -= 1;
+					std::ostringstream oss;
+					oss << "wheel Cnt: " << wheelCnt;
+					wnd.SetTitle(oss.str());
+					break;
 				}
 				}
 			}
