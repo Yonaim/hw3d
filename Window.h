@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ChiliWin.h"
 #include "ChiliException.h"
+#include "Keyboard.h"
 
 class Window
 {
@@ -54,6 +55,10 @@ class Window
 								   // 역할을 해주는 thunk
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+  public:
+	Keyboard kbd;
+
+  private:
 	int  width;
 	int  height;
 	HWND hWnd;

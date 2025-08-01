@@ -10,13 +10,13 @@ Window::WindowClass Window::WindowClass::wndClass;
 Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
 {
 	// register window class
-	WNDCLASSEXW wc   = {0};
-	wc.cbSize        = sizeof(wc);
-	wc.style         = CS_OWNDC;
-	wc.lpfnWndProc   = HandleMsgSetup;
-	wc.cbClsExtra    = 0;
-	wc.cbWndExtra    = 0;
-	wc.hInstance     = GetInstance();
+	WNDCLASSEXW wc = {0};
+	wc.cbSize      = sizeof(wc);
+	wc.style       = CS_OWNDC;
+	wc.lpfnWndProc = HandleMsgSetup;
+	wc.cbClsExtra  = 0;
+	wc.cbWndExtra  = 0;
+	wc.hInstance   = GetInstance();
 	wc.hIcon
 		= static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(IDI_APPICON),
 									   IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
@@ -27,7 +27,7 @@ Window::WindowClass::WindowClass() noexcept : hInst(GetModuleHandle(nullptr))
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName  = nullptr;
 	wc.lpszClassName = GetName();
-	int rc = RegisterClassExW(&wc);
+	int rc           = RegisterClassExW(&wc);
 	if (rc == 0)
 	{
 		throw CHWND_LAST_EXCEPT();
@@ -120,8 +120,8 @@ Window::Window(int width, int height, const wchar_t *name)
 		throw CHWND_LAST_EXCEPT();
 
 	// create window & get hWnd
-	hWnd = CreateWindowW(WindowClass::GetName(), name,
-						WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+	hWnd = CreateWindowW(
+		WindowClass::GetName(), name, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, WindowClass::GetInstance(), this);
 	if (hWnd == nullptr)
@@ -165,17 +165,31 @@ LRESULT CALLBACK Window::HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam,
 LRESULT CALLBACK Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam,
 								   LPARAM lParam)
 {
-	// Store pointer to window instance in user data
-	// Window* const pWnd = reinterpret_cast< Window* >( GetWindowLongPtr (hWnd
-	// , GWLP_USERDATA) ); return pWnd->HandleMsg (hWnd , msg , wParam ,
-	// lParam);
-
 	switch (msg)
 	{
-	case WM_CLOSE:
+	case WM_CLOSE: // I don't want this handler handle this message
+		// because I want 'our destructor' to destroy the window, not this
+		// handler
 		PostQuitMessage(0);
 		return (0);
+	case WM_KILLFOCUS: // clear keystates when window loses focus to prevent input getting "stuck" (does not released)
+		kbd.ClearState();
+		break; 
+	/********************* KEYBOARD MESSAGES **********************/
+	case WM_KEYDOWN:
+	case WM_SYSKEYDOWN: // include ALT key(VK_MENU)
+		if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled()) // 눌린 키가 직전 키와 중복이 아니거나 중복 허용일  때
+ 			kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+		break;
+	case WM_KEYUP:
+	case WM_SYSKEYUP:
+		kbd.OnKeyReleased(static_cast<unsigned char>(wParam));
+		break;
+	case WM_CHAR:
+		kbd.OnChar(static_cast<unsigned char>(wParam));
+		break;
 	}
+	/********************* KEYBOARD MESSAGES END **********************/
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 

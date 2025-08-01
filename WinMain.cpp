@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "WindowsMessageMap.h"
 #include <sstream>
+#include "Keyboard.h"
 
 std::wstring to_wstring(const char *src)
 {
@@ -10,7 +11,7 @@ std::wstring to_wstring(const char *src)
 	MultiByteToWideChar(CP_UTF8, 0, src, -1, &wstr[0], len);
 	return wstr;
 }
-  
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static WindowsMessageMap mm;
@@ -47,10 +48,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-int CALLBACK WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR     lpCmdLine,
-	int       nCmdShow )
+int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+					 LPSTR lpCmdLine, int nCmdShow)
 {
 	try
 	{
@@ -62,6 +61,9 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			if (wnd.kbd.KeyIsPressed(VK_MENU))
+				MessageBox(nullptr, L"Something happend...",
+						   L"Space Key was pressed", MB_OK);
 		}
 
 		if (gResult == -1)
@@ -71,16 +73,16 @@ int CALLBACK WinMain(HINSTANCE hInstance,
 	}
 	catch (const ChiliException &e)
 	{
-		MessageBoxA(nullptr, e.what(), e.GetType(),
-				   MB_OK | MB_ICONEXCLAMATION);
+		MessageBoxA(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
 	}
 	catch (const std::exception &e)
 	{
-		MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
+		MessageBoxA(nullptr, e.what(), "Standard Exception",
+					MB_OK | MB_ICONEXCLAMATION);
 	}
 	catch (...)
 	{
 		MessageBoxA(nullptr, "No details available", "Unknown Exception",
-				   MB_OK | MB_ICONEXCLAMATION);
+					MB_OK | MB_ICONEXCLAMATION);
 	}
 }
