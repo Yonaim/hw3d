@@ -61,9 +61,24 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			if (wnd.kbd.KeyIsPressed(VK_MENU))
-				MessageBox(nullptr, L"Something happend...",
-						   L"Space Key was pressed", MB_OK);
+
+			while (!wnd.mouse.IsEmpty())
+			{
+				const auto e = wnd.mouse.Read();
+				switch (e.GetType())
+				{
+				case Mouse::Event::Type::Leave:
+					wnd.SetTitle("Gone");
+					break;
+				case Mouse::Event::Type::Move:
+				{
+					std::ostringstream oss;
+					oss << "Mouse Position: (" << e.GetPosX() << ","
+						<< e.GetPosY() << ")";
+					wnd.SetTitle(oss.str());
+				}
+				}
+			}
 		}
 
 		if (gResult == -1)

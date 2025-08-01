@@ -107,6 +107,7 @@ std::string Window::Exception::GetErrorString() const noexcept
 // =============================================================================
 
 Window::Window(int width, int height, const wchar_t *name)
+	: width(width), height(height)
 {
 	// caculate window size based on desired client region size
 	RECT wr;
@@ -115,8 +116,8 @@ Window::Window(int width, int height, const wchar_t *name)
 	wr.right  = width + wr.left;
 	wr.bottom = height + wr.top;
 	// adjust window size to account for title bar, menu bar, etc.
-	if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-								FALSE)))
+	if (AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE)
+		== 0)
 		throw CHWND_LAST_EXCEPT();
 
 	// create window & get hWnd
@@ -128,6 +129,12 @@ Window::Window(int width, int height, const wchar_t *name)
 		throw CHWND_LAST_EXCEPT();
 
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
+}
+
+void Window::SetTitle(const std::string &title)
+{
+	if (SetWindowTextA(hWnd, title.c_str()) < 0)
+		throw CHWND_LAST_EXCEPT();
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam,
@@ -172,14 +179,17 @@ LRESULT CALLBACK Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam,
 		// handler
 		PostQuitMessage(0);
 		return (0);
-	case WM_KILLFOCUS: // clear keystates when window loses focus to prevent input getting "stuck" (does not released)
+	case WM_KILLFOCUS: // clear keystates when window loses focus to prevent
+					   // input getting "stuck" (does not released)
 		kbd.ClearState();
-		break; 
+		break;
 	/********************* KEYBOARD MESSAGES **********************/
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: // include ALT key(VK_MENU)
-		if (!(lParam & 0x40000000) || kbd.AutorepeatIsEnabled()) // 눌린 키가 직전 키와 중복이 아니거나 중복 허용일  때
- 			kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
+		if (!(lParam & 0x40000000)
+			|| kbd.AutorepeatIsEnabled()) // 눌린 키가 직전 키와 중복이 아니거나
+										  // 중복 허용일  때
+			kbd.OnKeyPressed(static_cast<unsigned char>(wParam));
 		break;
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
@@ -188,8 +198,72 @@ LRESULT CALLBACK Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam,
 	case WM_CHAR:
 		kbd.OnChar(static_cast<unsigned char>(wParam));
 		break;
-	}
 	/********************* KEYBOARD MESSAGES END **********************/
+
+	/************************ MOUSE MESSAGES **************************/
+
+	// lParam: 상위 2바이트, 하위 2바이트가 각각 x,y 좌표값.
+	// 변환 매크로 MAKEPOINTS 사용하여 POINTS 자료형으로 변환 (Short형 멤버 2개)
+	case WM_MOUSEMOVE:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		if (pt.x >= 0 && pt.x < width && pt.y >= 0 && pt.y < height)
+        // in client region
+        {
+			mouse.OnMouseMove(pt.x, pt.y); // log move
+			if (!mouse.IsInWindow()) // log Enter + capture mouse
+			{
+                SetCapture(hWnd);
+                mouse.OnMouseEnter();
+            }
+		}
+        else // not in client
+        {
+            if (wParam & (MK_LBUTTON | MK_RBUTTON)) // 마우스 버튼(왼/오)가 눌린 상태
+                mouse.OnMouseMove(pt.x, pt.y); // log move
+            else
+            {
+                ReleaseCapture(); // release capture
+                mouse.OnMouseLeave(); // log leave
+            }
+		}
+        break;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		mouse.OnLeftPressed(pt.x, pt.y);
+		break;
+	}
+	case WM_LBUTTONUP:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		mouse.OnLeftReleased(pt.x, pt.y);
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		mouse.OnRightPressed(pt.x, pt.y);
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		mouse.OnRightReleased(pt.x, pt.y);
+		break;
+	}
+	case WM_MOUSEWHEEL:
+	{
+		const POINTS pt = MAKEPOINTS(lParam);
+		if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+			mouse.OnWheelUp(pt.x, pt.y);
+		else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+			mouse.OnWheelDown(pt.x, pt.y);
+		break;
+	}
+		/************************ MOUSE MESSAGES END **************************/
+	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
