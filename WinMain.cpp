@@ -3,6 +3,7 @@
 #include "WindowsMessageMap.h"
 #include <sstream>
 #include "Keyboard.h"
+#include "App.h
 
 std::wstring to_wstring(const char *src)
 {
@@ -53,57 +54,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 {
 	try
 	{
-		Window wnd(800, 300, L"Donkey Fart Box");
-
-		MSG  msg;
-		BOOL gResult;
-		int  wheelCnt = 0;
-
-		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-
-			while (!wnd.mouse.IsEmpty())
-			{
-				const auto e = wnd.mouse.Read();
-				switch (e.GetType())
-				{
-				case Mouse::Event::Type::Leave:
-					wnd.SetTitle("Gone");
-					break;
-				case Mouse::Event::Type::Move:
-				{
-					std::ostringstream oss;
-					oss << "Mouse Position: (" << e.GetPosX() << ","
-						<< e.GetPosY() << ")";
-					wnd.SetTitle(oss.str());
-					break;
-				}
-				case Mouse::Event::Type::WheelUp:
-				{
-					wheelCnt += 1;
-					std::ostringstream oss;
-					oss << "wheel Cnt: " << wheelCnt;
-					wnd.SetTitle(oss.str());
-					break;
-				}
-				case Mouse::Event::Type::WheelDown:
-				{
-					wheelCnt -= 1;
-					std::ostringstream oss;
-					oss << "wheel Cnt: " << wheelCnt;
-					wnd.SetTitle(oss.str());
-					break;
-				}
-				}
-			}
-		}
-
-		if (gResult == -1)
-			return -1;
-		else
-			return msg.wParam;
+        return App{}.Go();
 	}
 	catch (const ChiliException &e)
 	{
