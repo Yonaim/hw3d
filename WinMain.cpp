@@ -3,7 +3,7 @@
 #include "WindowsMessageMap.h"
 #include <sstream>
 #include "Keyboard.h"
-#include "App.h
+#include "App.h"
 
 std::wstring to_wstring(const char *src)
 {

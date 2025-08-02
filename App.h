@@ -1,5 +1,6 @@
-#pragma once
+﻿#pragma once
 #include "Window.h"
+#include "ChiliTimer.h"
 
 class App
 {
@@ -11,5 +12,6 @@ class App
 	void DoFrame();
 
   private:
-	Window wnd;
-}
+	Window     wnd;
+	ChiliTimer timer;
+};
